@@ -51,11 +51,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+import os
+frontend_url = os.environ.get("FRONTEND_URL", "https://frontend-domain.vercel.app")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        frontend_url
     ],
     allow_credentials=True,
     allow_methods=["*"],
