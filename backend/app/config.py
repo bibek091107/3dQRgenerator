@@ -67,8 +67,11 @@ def load_settings() -> Settings:
         # Fall back to the copy built through the desktop app's CMake.
         default_engine = REPO_ROOT / "3DQRGenerator" / "build" / "bin" / "qr_engine"
 
+    is_vercel = os.environ.get("VERCEL") == "1"
+    default_output = Path("/tmp") if is_vercel else (REPO_ROOT / "3DQRGenerator")
+
     return Settings(
-        output_root=_env_path("QR_OUTPUT_ROOT", REPO_ROOT / "3DQRGenerator"),
+        output_root=_env_path("QR_OUTPUT_ROOT", default_output),
         engine_binary=_env_path("QR_ENGINE_BIN", default_engine),
         database_url=os.environ.get(
             "DATABASE_URL", "postgresql+psycopg://localhost/qrgenerator"
