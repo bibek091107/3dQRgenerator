@@ -22,7 +22,7 @@ import type {
 } from "./types";
 
 const BASE =
-  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ?? "https://backend-l7adezprh-bibek091107s-projects.vercel.app";
+  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ?? "https://backend-indol-two-cumy47ky2b.vercel.app";
 
 export class ApiError extends Error {
   readonly code: string;
