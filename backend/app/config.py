@@ -75,15 +75,30 @@ def load_settings() -> Settings:
     # Transaction Pooler connection string, e.g.:
     #   postgresql+psycopg://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
     database_url = os.environ.get("DATABASE_URL")
+
+    # Strip accidental leading/trailing whitespace (e.g. "DATABASE_URL= postgresql://...")
+    if database_url:
+        database_url = database_url.strip()
+
     if not database_url:
         if is_vercel:
             raise RuntimeError(
                 "DATABASE_URL environment variable is not set. "
                 "Add it in the Vercel project's Production Environment Variables "
-                "using the Supabase Transaction Pooler connection string."
+                "using the Supabase Transaction Pooler connection string: "
+                "postgresql+psycopg://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres"
             )
         # Local development fallback.
         database_url = "postgresql+psycopg://localhost/qrgenerator"
+
+    # Normalise the URL scheme for SQLAlchemy + psycopg v3.
+    # Plain "postgresql://" or "postgres://" are not valid driver specifiers for
+    # psycopg v3 with SQLAlchemy — they must be "postgresql+psycopg://".
+    # This lets the Vercel env var (or local .env) use either form safely.
+    for plain in ("postgresql://", "postgres://"):
+        if database_url.startswith(plain):
+            database_url = "postgresql+psycopg://" + database_url[len(plain):]
+            break
 
     return Settings(
         output_root=_env_path("QR_OUTPUT_ROOT", default_output),
