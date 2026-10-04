@@ -21,6 +21,10 @@ from pathlib import Path
 # <repo>/backend/app/config.py -> <repo>
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
+# On Vercel (rootDirectory=backend), the deployed function root is at parents[1]
+# which contains app/ and bin/. Locally, it's the backend/ directory.
+FUNC_ROOT = Path(__file__).resolve().parents[1]
+
 log = logging.getLogger("qrbackend.config")
 
 
@@ -91,12 +95,29 @@ class Settings:
 
 
 def load_settings() -> Settings:
-    default_engine = REPO_ROOT / "engine" / "build" / "bin" / "qr_engine"
-    if not default_engine.exists():
-        # Fall back to the copy built through the desktop app's CMake.
-        default_engine = REPO_ROOT / "3DQRGenerator" / "build" / "bin" / "qr_engine"
-
     is_vercel = os.environ.get("VERCEL") == "1"
+
+    # Pre-packaged Linux binary (shipped with the deployment, e.g. backend/bin/qr_engine).
+    packaged_binary = FUNC_ROOT / "bin" / "qr_engine"
+
+    # Local development binary (built via cmake in engine/).
+    local_binary = REPO_ROOT / "engine" / "build" / "bin" / "qr_engine"
+
+    # Fallback: desktop app's build output.
+    desktop_binary = REPO_ROOT / "3DQRGenerator" / "build" / "bin" / "qr_engine"
+
+    # On Vercel, the packaged binary is the only option.
+    # Locally, prefer the local build, then the packaged binary, then desktop fallback.
+    if is_vercel:
+        default_engine = packaged_binary
+    else:
+        if local_binary.exists():
+            default_engine = local_binary
+        elif packaged_binary.exists():
+            default_engine = packaged_binary
+        else:
+            default_engine = desktop_binary
+
     default_output = Path("/tmp") if is_vercel else (REPO_ROOT / "3DQRGenerator")
 
     # On Vercel there is no local PostgreSQL — DATABASE_URL must be set explicitly
