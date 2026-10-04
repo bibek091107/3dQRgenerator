@@ -22,7 +22,7 @@ import type {
 } from "./types";
 
 const BASE =
-  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ?? "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ?? "https://backend-l7adezprh-bibek091107s-projects.vercel.app";
 
 export class ApiError extends Error {
   readonly code: string;
