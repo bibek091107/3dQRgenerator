@@ -4,6 +4,7 @@
 
 .DS_Store
 .vscode/
+.vercel/
 
 __pycache__/
 *.py[cod]
@@ -20,3 +21,4 @@ build/
 *.db
 *.sqlite
 *.sqlite3
+.vercel

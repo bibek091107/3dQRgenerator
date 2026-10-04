@@ -13,6 +13,7 @@ T001.png produced by the desktop app.)
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,18 +21,46 @@ from pathlib import Path
 # <repo>/backend/app/config.py -> <repo>
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
+log = logging.getLogger("qrbackend.config")
+
 
 def _env_path(name: str, default: Path) -> Path:
     raw = os.environ.get(name)
     return Path(raw).expanduser().resolve() if raw else default
 
-try:
-    from dotenv import load_dotenv
-    env_file = REPO_ROOT / ".env"
-    if env_file.exists():
-        load_dotenv(env_file)
-except ImportError:
-    pass
+
+def _load_dotenv_files() -> None:
+    """Load the local development dotenv file(s), if any.
+
+    Production (Vercel) injects real environment variables, so nothing here is
+    required there; this only makes ``python-dotenv``-based local setups work.
+    ``load_dotenv`` never overrides variables that are already set, so an
+    exported variable always wins over the file.
+    """
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        return
+
+    # Ordered candidates: the repository root file is the one actually used,
+    # backend/.env is what scripts/setup_backend.sh creates from .env.example.
+    for candidate in (REPO_ROOT / ".env", REPO_ROOT / "backend" / ".env"):
+        if candidate.is_file():
+            load_dotenv(candidate)
+
+
+_load_dotenv_files()
+
+
+def _redact(url: str) -> str:
+    """Host/port only — never log or echo the password."""
+    try:
+        from urllib.parse import urlsplit
+
+        parts = urlsplit(url)
+        return f"{parts.scheme}://{parts.hostname}:{parts.port or ''}{parts.path}"
+    except Exception:  # pragma: no cover - diagnostics must never crash startup
+        return "<unparsable DATABASE_URL>"
 
 
 @dataclass(frozen=True)
@@ -83,12 +112,13 @@ def load_settings() -> Settings:
     if not database_url:
         if is_vercel:
             raise RuntimeError(
-                "DATABASE_URL environment variable is not set. "
-                "Add it in the Vercel project's Production Environment Variables "
-                "using the Supabase Transaction Pooler connection string: "
-                "postgresql+psycopg://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres"
+                "DATABASE_URL is not configured. Add it in the Vercel project's "
+                "Production Environment Variables using the Supabase Transaction "
+                "Pooler connection string "
+                "(postgresql://<user>:<password>@<pooler-host>:6543/postgres). "
+                "The backend refuses to fall back to a local PostgreSQL server."
             )
-        # Local development fallback.
+        # Local development fallback only — never reached in production.
         database_url = "postgresql+psycopg://localhost/qrgenerator"
 
     # Normalise the URL scheme for SQLAlchemy + psycopg v3.
@@ -109,3 +139,7 @@ def load_settings() -> Settings:
 
 
 settings = load_settings()
+log.info(
+    "DATABASE_URL target (credentials redacted): %s",
+    _redact(settings.database_url),
+)

@@ -1,0 +1,30 @@
+# Shared ignore file for `vercel --prod` run from the repository root.
+#
+# Both Vercel projects (backend, frontend) use a Root Directory inside this
+# repo, so they are both deployed from here. Only the project-specific root
+# directory is needed for each build; everything else is dropped to keep the
+# upload small (the repo is ~1 GB, mostly frontend/node_modules and
+# 3DQRGenerator/build).
+
+3DQRGenerator/
+engine/
+scripts/
+
+patch.js
+backend.Dockerfile
+docker-compose.yml
+README.md
+
+frontend/node_modules/
+frontend/.next/
+frontend/.vercel/
+frontend/coverage/
+
+# Never upload local secrets or build artefacts.
+**/.env
+**/.env.*
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+**/*.pyc

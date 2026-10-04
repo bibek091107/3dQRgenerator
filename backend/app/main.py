@@ -52,14 +52,26 @@ app = FastAPI(
 )
 
 import os
-frontend_url = os.environ.get("FRONTEND_URL", "https://frontend-domain.vercel.app")
+
+# Origins allowed to call the API. FRONTEND_URL holds the deployed
+# Tools Management 2 frontend origin (comma-separated if there is more than
+# one, e.g. a custom domain plus the *.vercel.app alias). It is set in the
+# Vercel project's Production Environment Variables; the localhost entries stay
+# for `next dev`.
+_allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+for _raw in (os.environ.get("FRONTEND_URL") or "").split(","):
+    _origin = _raw.strip().rstrip("/")
+    if _origin and _origin not in _allowed_origins:
+        _allowed_origins.append(_origin)
+
+log.info("CORS allow_origins: %s", _allowed_origins)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        frontend_url
-    ],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,7 +81,7 @@ app.add_middleware(
     expose_headers=["Content-Disposition"],
 )
 
-from .routers import batches, engine as engine_router, objects, supabase_sync
+from .routers import supabase_sync
 app.include_router(supabase_sync.router)
 app.include_router(engine_router.router)
 app.include_router(batches.router)
