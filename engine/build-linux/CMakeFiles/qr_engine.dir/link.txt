@@ -1,0 +1,1 @@
+/opt/homebrew/bin/x86_64-linux-musl-g++ -I/var/folders/lp/6_jtmq5j7vq1wcy3szpvwklm0000gn/T/opencode/xbuild/zlib-musl/include -O3 -DNDEBUG -L/var/folders/lp/6_jtmq5j7vq1wcy3szpvwklm0000gn/T/opencode/xbuild/zlib-musl/lib -static -Wl,--dependency-file=CMakeFiles/qr_engine.dir/link.d CMakeFiles/qr_engine.dir/app/EngineMain.cpp.o -o bin/qr_engine  libqr_engine_core.a -lz

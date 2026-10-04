@@ -1,0 +1,4 @@
+/Users/bibekkhadka/Downloads/Tools Management 2/engine/build-linux/CMakeFiles/qr_engine_core.dir
+/Users/bibekkhadka/Downloads/Tools Management 2/engine/build-linux/CMakeFiles/qr_engine.dir
+/Users/bibekkhadka/Downloads/Tools Management 2/engine/build-linux/CMakeFiles/edit_cache.dir
+/Users/bibekkhadka/Downloads/Tools Management 2/engine/build-linux/CMakeFiles/rebuild_cache.dir
