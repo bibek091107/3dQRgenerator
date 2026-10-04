@@ -70,12 +70,25 @@ def load_settings() -> Settings:
     is_vercel = os.environ.get("VERCEL") == "1"
     default_output = Path("/tmp") if is_vercel else (REPO_ROOT / "3DQRGenerator")
 
+    # On Vercel there is no local PostgreSQL — DATABASE_URL must be set explicitly
+    # in the Vercel project's Production Environment Variables to the Supabase
+    # Transaction Pooler connection string, e.g.:
+    #   postgresql+psycopg://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        if is_vercel:
+            raise RuntimeError(
+                "DATABASE_URL environment variable is not set. "
+                "Add it in the Vercel project's Production Environment Variables "
+                "using the Supabase Transaction Pooler connection string."
+            )
+        # Local development fallback.
+        database_url = "postgresql+psycopg://localhost/qrgenerator"
+
     return Settings(
         output_root=_env_path("QR_OUTPUT_ROOT", default_output),
         engine_binary=_env_path("QR_ENGINE_BIN", default_engine),
-        database_url=os.environ.get(
-            "DATABASE_URL", "postgresql+psycopg://localhost/qrgenerator"
-        ),
+        database_url=database_url,
         engine_timeout=float(os.environ.get("QR_ENGINE_TIMEOUT", "120")),
     )
 

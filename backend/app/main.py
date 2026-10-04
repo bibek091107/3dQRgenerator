@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     storage.ensure_output_dirs()
     try:
         await init_models()
-        log.info("PostgreSQL schema ready (%s)", settings.database_url)
+        log.info("PostgreSQL schema ready")
     except Exception as exc:  # pragma: no cover - startup diagnostics
         log.error("Database unavailable: %s", exc)
 
@@ -88,9 +88,14 @@ async def health() -> dict:
         db_error = str(exc)
 
     engine_ok = settings.engine_binary.exists()
+
+    # Redact credentials from the URL before returning it in the response.
+    import re
+    safe_url = re.sub(r"://[^@]+@", "://<redacted>@", settings.database_url)
+
     return {
-        "status": "ok" if (db_ok and engine_ok) else "degraded",
-        "database": {"ok": db_ok, "error": db_error, "url": settings.database_url},
+        "status": "ok" if db_ok else "degraded",
+        "database": {"ok": db_ok, "error": db_error, "url": safe_url},
         "engine": {
             "ok": engine_ok,
             "binary": str(settings.engine_binary),
